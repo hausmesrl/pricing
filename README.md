@@ -22,7 +22,7 @@ npm run lint
 - Nel codice e negli URL si usano solo gli id `entry`, `recommended`, `pro`.
 - Le CTA puntano a `CTA_LINKS.checkout` con `?plan=<id>&billing=monthly|annual`.
 - I prezzi annuali (199/279/399 e 2.388/3.348/4.788) sono valori espliciti nel config.
-- Le liste feature ("Tutto in [piano], più:") sono generate dai dati: cambiando un limite o un nome si aggiornano da sole.
+- Le liste feature sono generate dai dati: ogni piano elenca per esteso i 3 moduli, i propri limiti e le opportunità incluse.
 
 ## Branding
 

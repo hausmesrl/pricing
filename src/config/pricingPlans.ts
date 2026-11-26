@@ -226,7 +226,7 @@ export function getPlanCtaLabel(plan: Plan): string {
 export const COMPARISON_CTA_LABEL = "Scegli";
 
 /* -------------------------------------------------------------------------- */
-/*  Liste feature (derivate dai dati, nessun testo scritto a mano per piano)  */
+/*  Liste feature (derivate dai dati, elenco completo per ogni piano)         */
 /* -------------------------------------------------------------------------- */
 
 export interface FeatureItem {
@@ -248,41 +248,25 @@ export function formatLimit(key: LimitKey, value: Limit): string {
 }
 
 /**
- * entry: "Include tutti e 3 i moduli:" + moduli + limiti
- * piani successivi: "Tutto in [piano precedente], più:" + solo ciò che cambia
+ * Ogni piano elenca per esteso tutto ciò che include (niente "Tutto in [piano], più:"):
+ * "Include tutti e 3 i moduli:" + i 3 moduli + i propri limiti + le opportunità incluse
+ * + l'attivazione inclusa sull'annuale, se prevista.
  */
 export function getPlanFeatures(plan: Plan): FeatureList {
-  const index = PLANS.findIndex((p) => p.id === plan.id);
-  const previous = index > 0 ? PLANS[index - 1] : undefined;
-
-  const limitItems: FeatureItem[] = LIMITS.filter(
-    (l) => !previous || previous.limits[l.key] !== plan.limits[l.key],
-  ).map((l) => ({ id: `limit-${l.key}`, text: formatLimit(l.key, plan.limits[l.key]) }));
-
-  const opportunityItems: FeatureItem[] = OPPORTUNITIES.filter(
-    (o) => plan.opportunities[o.key] && (!previous || !previous.opportunities[o.key]),
-  ).map((o) => ({ id: `opp-${o.key}`, text: o.label, partner: o.partner }));
-
-  const activationItems: FeatureItem[] =
-    plan.activation.annual === 0 && (!previous || previous.activation.annual !== 0)
-      ? [{ id: "activation-included", text: "Attivazione inclusa con il piano annuale" }]
-      : [];
-
-  if (!previous) {
-    return {
-      intro: `Include tutti e ${MODULES.length} i moduli:`,
-      items: [
-        ...MODULES.map((m) => ({ id: `module-${m.id}`, text: m.name })),
-        ...limitItems,
-        ...opportunityItems,
-        ...activationItems,
-      ],
-    };
-  }
-
   return {
-    intro: `Tutto in ${getPlanName(previous.id)}, più:`,
-    items: [...limitItems, ...opportunityItems, ...activationItems],
+    intro: `Include tutti e ${MODULES.length} i moduli:`,
+    items: [
+      ...MODULES.map((m) => ({ id: `module-${m.id}`, text: m.name })),
+      ...LIMITS.map((l) => ({ id: `limit-${l.key}`, text: formatLimit(l.key, plan.limits[l.key]) })),
+      ...OPPORTUNITIES.filter((o) => plan.opportunities[o.key]).map((o) => ({
+        id: `opp-${o.key}`,
+        text: o.label,
+        partner: o.partner,
+      })),
+      ...(plan.activation.annual === 0
+        ? [{ id: "activation-included", text: "Attivazione inclusa con il piano annuale" }]
+        : []),
+    ],
   };
 }
 
