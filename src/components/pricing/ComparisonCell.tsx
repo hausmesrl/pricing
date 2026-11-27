@@ -8,6 +8,7 @@ import {
   MONTHS_PER_YEAR,
   UNLIMITED,
   UNLIMITED_CELL_TEXT,
+  formatTrainingCell,
   type BillingPeriod,
   type ComparisonRow,
   type Plan,
@@ -55,6 +56,9 @@ export function ComparisonCell({
         <span className="font-semibold">{value === UNLIMITED ? UNLIMITED_CELL_TEXT : value}</span>
       );
     }
+
+    case "training":
+      return <span className="font-semibold">{formatTrainingCell(plan.training)}</span>;
 
     case "opportunity": {
       if (!plan.opportunities[row.key]) return <NotIncluded />;

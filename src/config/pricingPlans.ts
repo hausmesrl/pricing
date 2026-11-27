@@ -123,6 +123,38 @@ export const OPPORTUNITIES = [
 export type OpportunityKey = (typeof OPPORTUNITIES)[number]["key"];
 
 /* -------------------------------------------------------------------------- */
+/*  Formazione                                                                */
+/* -------------------------------------------------------------------------- */
+
+export type Training =
+  | { type: "webinar" }
+  | { type: "oneToOne"; sessions: number; frequency: "once" | "monthly" };
+
+export const TRAINING_COPY = {
+  rowLabel: "Formazione",
+  webinarFeature: "Formazione inclusa tramite webinar",
+  webinarCell: "Webinar",
+  trainer: "con un nostro tecnico",
+};
+
+function formatSessions(t: Extract<Training, { type: "oneToOne" }>): string {
+  const base = `${t.sessions} ${t.sessions === 1 ? "formazione" : "formazioni"} 1:1`;
+  return t.frequency === "monthly" ? `${base} al mese` : base;
+}
+
+/** Testo per la lista feature della card. */
+export function formatTrainingFeature(t: Training): string {
+  if (t.type === "webinar") return TRAINING_COPY.webinarFeature;
+  return `${formatSessions(t)} ${TRAINING_COPY.trainer}`;
+}
+
+/** Testo breve per la cella della tabella di confronto. */
+export function formatTrainingCell(t: Training): string {
+  if (t.type === "webinar") return TRAINING_COPY.webinarCell;
+  return formatSessions(t);
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Piani                                                                     */
 /* -------------------------------------------------------------------------- */
 
@@ -135,6 +167,7 @@ export interface Plan {
   highlightNote?: string;
   limits: Record<LimitKey, Limit>;
   opportunities: Record<OpportunityKey, boolean>;
+  training: Training;
   pricing: {
     monthly: { perMonth: number };
     annual: { perMonth: number; totalPerYear: number };
@@ -152,6 +185,7 @@ export const PLANS: readonly Plan[] = [
     highlighted: false,
     limits: { quotesPerYear: 20, users: 1, whatsappNumbers: 5, concurrentSites: 3 },
     opportunities: { qualifiedProjects: false, premiumPartnerProjects: false },
+    training: { type: "webinar" },
     pricing: {
       monthly: { perMonth: 249 },
       annual: { perMonth: 199, totalPerYear: 2388 },
@@ -168,6 +202,7 @@ export const PLANS: readonly Plan[] = [
     highlightNote: "Il più scelto dalle imprese",
     limits: { quotesPerYear: 50, users: 3, whatsappNumbers: 15, concurrentSites: 7 },
     opportunities: { qualifiedProjects: true, premiumPartnerProjects: false },
+    training: { type: "oneToOne", sessions: 1, frequency: "once" },
     pricing: {
       monthly: { perMonth: 349 },
       annual: { perMonth: 279, totalPerYear: 3348 },
@@ -187,6 +222,7 @@ export const PLANS: readonly Plan[] = [
       concurrentSites: UNLIMITED,
     },
     opportunities: { qualifiedProjects: true, premiumPartnerProjects: true },
+    training: { type: "oneToOne", sessions: 1, frequency: "monthly" },
     pricing: {
       monthly: { perMonth: 499 },
       annual: { perMonth: 399, totalPerYear: 4788 },
@@ -249,7 +285,7 @@ export function formatLimit(key: LimitKey, value: Limit): string {
 
 /**
  * Ogni piano elenca per esteso tutto ciò che include (niente "Tutto in [piano], più:"):
- * "Include tutti e 3 i moduli:" + i 3 moduli + i propri limiti + le opportunità incluse
+ * "Include tutti e 3 i moduli:" + i 3 moduli + i propri limiti + la formazione + le opportunità incluse
  * + l'attivazione inclusa sull'annuale, se prevista.
  */
 export function getPlanFeatures(plan: Plan): FeatureList {
@@ -258,6 +294,7 @@ export function getPlanFeatures(plan: Plan): FeatureList {
     items: [
       ...MODULES.map((m) => ({ id: `module-${m.id}`, text: m.name })),
       ...LIMITS.map((l) => ({ id: `limit-${l.key}`, text: formatLimit(l.key, plan.limits[l.key]) })),
+      { id: "training", text: formatTrainingFeature(plan.training) },
       ...OPPORTUNITIES.filter((o) => plan.opportunities[o.key]).map((o) => ({
         id: `opp-${o.key}`,
         text: o.label,
@@ -280,6 +317,7 @@ export type ComparisonRow =
   | { id: string; kind: "included"; label: string }
   | { id: string; kind: "limit"; label: string; key: LimitKey }
   | { id: string; kind: "opportunity"; label: string; key: OpportunityKey; partner?: PartnerId }
+  | { id: string; kind: "training"; label: string }
   | { id: string; kind: "cost"; label: string; metric: CostMetric };
 
 export interface ComparisonSection {
@@ -298,6 +336,11 @@ export const COMPARISON_SECTIONS: ComparisonSection[] = [
     id: "limiti",
     title: "Limiti",
     rows: LIMITS.map((l) => ({ id: `limit-${l.key}`, kind: "limit", label: l.label, key: l.key })),
+  },
+  {
+    id: "formazione",
+    title: "Formazione",
+    rows: [{ id: "training", kind: "training", label: TRAINING_COPY.rowLabel }],
   },
   {
     id: "opportunita",
